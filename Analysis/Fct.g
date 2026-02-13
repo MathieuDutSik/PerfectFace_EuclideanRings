@@ -83,3 +83,4 @@ GetTspace:=function(k, d)
 
     return tspace;
 end;
+
