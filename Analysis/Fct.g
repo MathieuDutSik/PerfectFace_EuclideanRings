@@ -7,6 +7,18 @@ RemoveFileIfExist:=function(FileName)
     fi;
 end;
 
+GetBinaryFilename:=function(FileName)
+    local TmpFile, list_lines;
+    TmpFile:=Filename(DirectoryTemporary(), "Test.in");
+    Exec("which ", FileName, " > ", TmpFile);
+    list_lines:=ReadTextFile(TmpFile);
+    if Length(list_lines)=0 then
+        return fail;
+    fi;
+    return list_lines[1];
+end;
+
+
 GetFundamentalInfo:=function(d)
   local res, IsCorrect, eSum, eProd, Dval, eQuot, type_tspace;
   res:=d mod 4;
@@ -37,7 +49,7 @@ GetFundamentalInfo:=function(d)
 end;
 
 GetTspace:=function(k, d)
-    local info, FileNml, FileOut, output, cmd, tspace;
+    local info, FileNml, FileOut, binary, output, cmd, tspace;
 
     info:=GetFundamentalInfo(d);
     if info.IsCorrect=false then
@@ -65,10 +77,8 @@ GetTspace:=function(k, d)
     AppendTo(output, "/\n");
     CloseStream(output);
 
-    cmd:=Concatenation(
-        "/Users/mathieudutoursikiric/GITall/GITmathieu/polyhedral_common/src_latt/TSPACE_FileFormatConversion ",
-        FileNml, " GAP ", FileOut
-    );
+    binary:=GetBinaryFilename("TSPACE_FileFormatConversion");
+    cmd:=Concatenation(binary, " ", FileNml, " GAP ", FileOut);
     Exec(cmd);
 
     if IsExistingFile(FileOut)=false then
