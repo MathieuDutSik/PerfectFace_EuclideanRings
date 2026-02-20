@@ -7,6 +7,20 @@ RemoveFileIfExist:=function(FileName)
     fi;
 end;
 
+WriteMatrixStream:=function(output, EXT)
+    local eEXT, eVal;
+    AppendTo(output, Length(EXT), " ", Length(EXT[1]), "\n");
+    for eEXT in EXT
+    do
+        for eVal in eEXT
+        do
+            AppendTo(output, " ", eVal);
+        od;
+        AppendTo(output, "\n");
+    od;
+end;
+
+
 GetBinaryFilename:=function(FileName)
     local TmpFile, list_lines;
     TmpFile:=Filename(DirectoryTemporary(), "Test.in");
@@ -112,6 +126,7 @@ FindSplittingCombinatorial:=function(l_gens, EXT)
         od;
     od;
     Lconn:=ConnectedComponents(GRA);
+    Print("FindSplittingCombinatorial, Lconn=", Lconn, "\n");
     return List(Lconn, eConn->EXT{eConn});
 end;
 
@@ -178,8 +193,11 @@ end;
 
 
 are_space_split:=function(EXT1, EXT2)
-    local dim, NSP1, NSP2, Sum_NSP, rnk;
+    local dim, EXT1_red, EXT2_red, NSP1, NSP2, Sum_NSP, rnk;
     dim:=Length(EXT1);
+    EXT1_red:=RowReduction(EXT1).EXT;
+    EXT2_red:=RowReduction(EXT2).EXT;
+    Print("are_space_split |EXT1_red|=", Length(EXT1_red), " |EXT2_red|=", Length(EXT2_red), "\n");
     NSP1:=NullspaceMat(TransposedMat(EXT1));
     NSP2:=NullspaceMat(TransposedMat(EXT2));
     Sum_NSP:=Concatenation(NSP1, NSP2);
@@ -208,7 +226,7 @@ get_space_family:=function(EXT, l_spanning_elements)
             Add(EXTtot, fEXT);
         od;
     od;
-    return EXTtot;
+    return Set(EXTtot);
 end;
 
 is_irreducible_ext:=function(rec_tspace, EXT)
@@ -221,15 +239,20 @@ is_irreducible_ext:=function(rec_tspace, EXT)
     od;
     Lconn:=FindSplittingCombinatorial(l_gens, EXT);
     nConn:=Length(Lconn);
+    Print("nConn=", nConn, "\n");
     get_ext_from_part:=function(eP)
         return Concatenation(Lconn{eP});
     end;
     Lpart:=Filtered(Combinations([1..nConn]), x->Length(x)>0 and Length(x)<nConn);
+    Print("Lpart=", Lpart, "\n");
     for ePart in Lpart
     do
         fPart:=Difference([1..nConn], ePart);
+        Print("ePart=", ePart, " fPart=", fPart, "\n");
         EXT_a1:=get_ext_from_part(ePart);
         EXT_a2:=get_ext_from_part(fPart);
+#        Print("EXT_a1=", EXT_a1, "\n");
+#        Print("EXT_a2=", EXT_a2, "\n");
         EXT_b1:=get_space_family(EXT_a1, rec_tspace.l_spanning_elements);
         EXT_b2:=get_space_family(EXT_a2, rec_tspace.l_spanning_elements);
         if are_space_split(EXT_b1, EXT_b2) then
@@ -258,8 +281,8 @@ direct_sum:=function(EXT1, EXT2)
     do
         e_partA:=eEXT2{[1..k2]};
         e_partB:=eEXT2{[k2+1..2*k2]};
-        f_partA:=Concatenation(ListWithIdenticalEntries(k2, 0), e_partA);
-        f_partB:=Concatenation(ListWithIdenticalEntries(k2, 0), e_partB);
+        f_partA:=Concatenation(ListWithIdenticalEntries(k1, 0), e_partA);
+        f_partB:=Concatenation(ListWithIdenticalEntries(k1, 0), e_partB);
         fEXT:=Concatenation(f_partA, f_partB);
         Add(EXT, fEXT);
     od;
@@ -291,6 +314,7 @@ append_initial_tspace:=function(output, k, d)
     AppendTo(output, " ComputeContractingHomotopy = T\n");
     AppendTo(output, " CacheFile = \"", CacheFile, "\"\n");
     AppendTo(output, "/\n");
+    AppendTo(output, "\n");
 end;
 
 
@@ -305,7 +329,6 @@ get_cells:=function(k, d, idim)
 
     output:=OutputTextFile(FileNml, true);
     append_initial_tspace(output, k, d);
-    AppendTo(output, "\n");
     AppendTo(output, "&QUERIES\n");
     AppendTo(output, " FileCells = \"", FileCells, "\"\n");
     AppendTo(output, " DimCell = ", idim, "\"\n");
@@ -336,13 +359,12 @@ test_equivalent_cells:=function(k, d, EXT1, EXT2)
 
     output:=OutputTextFile(FileEquiv, true);
     AppendTo(output, "2\n");
-    WriteMatrix(output, EXT1);
-    WriteMatrix(output, EXT2);
+    WriteMatrixStream(output, EXT1);
+    WriteMatrixStream(output, EXT2);
     CloseStream(output);
 
     output:=OutputTextFile(FileNml, true);
     append_initial_tspace(output, k, d);
-    AppendTo(output, "\n");
     AppendTo(output, "&QUERIES\n");
     AppendTo(output, " FileEquivalenceQueries = \"", FileEquiv, "\"\n");
     AppendTo(output, "/\n");
@@ -383,8 +405,14 @@ is_direct_extension:=function(k, d, EXT)
     do
         EXTsum:=direct_sum(RecLower.EXT, EXTone_dim_cell);
         Print("is_direct_extension, We have EXTsum\n");
+#        Print("EXT=\n");
+#        PrintArray(EXT);
+#        Print("EXTsum=\n");
+#        PrintArray(EXTsum);
+#        Print("Set(EXT) = Set(EXTsum)=", Set(EXT) = Set(EXTsum), "\n");
         eEquiv:=test_equivalent_cells(k, d, EXT, EXTsum);
         Print("is_direct_extension, We have eEquiv\n");
+        Print("eEquiv=", eEquiv, "\n");
         if eEquiv<>fail then
             return true;
         fi;
@@ -394,11 +422,12 @@ end;
 
 is_irreducible_both_method:=function(k, d, EXT)
     local rec_tspace, test1, test2, test2_not;
+    Print("---------------------------------------------------------------------------------------\n");
     Print("is_irreducible_both_method, step 1\n");
     rec_tspace:=get_rec_tspace(k, d);
     Print("is_irreducible_both_method, step 2\n");
     test1:=is_irreducible_ext(rec_tspace, EXT);
-    Print("is_irreducible_both_method, step 3\n");
+    Print("is_irreducible_both_method, step 3 |EXT|=", Length(EXT), "\n");
     test2:=is_direct_extension(k, d, EXT);
     Print("is_irreducible_both_method, step 4\n");
     test2_not:=not test2;
