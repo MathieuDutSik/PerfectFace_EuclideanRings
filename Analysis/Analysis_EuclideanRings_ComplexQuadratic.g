@@ -28,6 +28,9 @@ process_example:=function(d)
     ListCells3:=get_cells_with_irreducibility(3, -3, 5);
     ListCells4:=get_cells_with_irreducibility(3, -3, 4);
 
+    RecSave:=rec(ListCells2:=ListCells2, ListCells3:=ListCells3, ListCells4:=ListCells4);
+    FileSave:=Concatenation("Enumeration_3_", String(d), ".gap");
+    SaveDataToFile(FileSave, RecSave);
 end;
 
 process_example(-3);
