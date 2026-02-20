@@ -13,7 +13,7 @@ get_grp:=function()
 
     for value in ListValue
     do
-        RecTspace:=GetTspace(3, value);
+        RecTspace:=get_rec_tspace(3, value);
         entry:=rec(value:=value, rec_tspace:=RecTspace);
         GRP:=Group(entry.rec_tspace.PtStabGens);
         Add(ListGRP, GRP);
@@ -21,5 +21,18 @@ get_grp:=function()
     od;
 end;
 
-ListEXT:=get_cells(3, -3, 4);
+
+process_example:=function(d)
+    local ListCells2, ListCells3, ListCells4;
+    ListCells2:=get_cells_with_irreducibility(3, -3, 6);
+    ListCells3:=get_cells_with_irreducibility(3, -3, 5);
+    ListCells4:=get_cells_with_irreducibility(3, -3, 4);
+
+end;
+
+process_example(-3);
+process_example(-4);
+process_example(-7);
+process_example(-8);
+process_example(-11);
 
