@@ -31,8 +31,8 @@ process_example:=function(d)
     ListLower3:=get_lower_cells(3, d, 5);
     ListLower4:=get_lower_cells(3, d, 4);
 
-    ListUpper2:=get_lower_cells(3, d, 6);
-    ListUpper3:=get_lower_cells(3, d, 5);
+    ListUpper2:=get_upper_cells(3, d, 6);
+    ListUpper3:=get_upper_cells(3, d, 5);
 
     RecSave:=rec(ListCells2:=ListCells2, ListCells3:=ListCells3, ListCells4:=ListCells4,
                  ListLower3:=ListLower3, ListLower4:=ListLower4,
