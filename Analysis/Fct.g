@@ -194,12 +194,21 @@ end;
 
 are_space_split:=function(EXT1, EXT2)
     local dim, EXT1_red, EXT2_red, NSP1, NSP2, Sum_NSP, rnk;
-    dim:=Length(EXT1);
+    dim:=Length(EXT1[1]);
     EXT1_red:=RowReduction(EXT1).EXT;
     EXT2_red:=RowReduction(EXT2).EXT;
-    Print("are_space_split |EXT1_red|=", Length(EXT1_red), " |EXT2_red|=", Length(EXT2_red), "\n");
-    NSP1:=NullspaceMat(TransposedMat(EXT1));
-    NSP2:=NullspaceMat(TransposedMat(EXT2));
+    Print("are_space_split |EXT1_red|=", Length(EXT1_red), " |EXT2_red|=", Length(EXT2_red), " dim=", dim, "\n");
+    get_int_nsp:=function(EXTin)
+        if Length(EXTin)=0 then
+            return IdentityMat(dim);
+        fi;
+        if Length(EXTin)=dim then
+            return [];
+        fi;
+        return NullspaceIntMat(TransposedMat(EXTin));
+    end;
+    NSP1:=get_int_nsp(EXT1_red);
+    NSP2:=get_int_nsp(EXT2_red);
     Sum_NSP:=Concatenation(NSP1, NSP2);
     if Length(Sum_NSP)=0 then
         return false;
@@ -208,7 +217,24 @@ are_space_split:=function(EXT1, EXT2)
         if rnk < dim then
             return false;
         fi;
-        return true;
+        EXT1_sat:=get_int_nsp(NSP1);
+        EXT2_sat:=get_int_nsp(NSP2);
+#        Expr1:=List(EXT1, x->SolutionIntMat(EXT1_sat, x));
+#        Expr2:=List(EXT2, x->SolutionIntMat(EXT2_sat, x));
+#        det1:=AbsInt(DeterminantMat(BaseIntMat(Expr1)));
+#        det2:=AbsInt(DeterminantMat(BaseIntMat(Expr2)));
+        EXT12_sum:=Concatenation(EXT1_sat, EXT2_sat);
+        det:=AbsInt(DeterminantMat(EXT12_sum));
+        Print("det=", det, "\n");
+#        Print("det=", det, " det1=", det1, " det2=", det2, "\n");
+        if det = 1 then
+            Print("EXT1_sat=\n");
+            PrintArray(EXT1_sat);
+            Print("EXT2_sat=\n");
+            PrintArray(EXT2_sat);
+            return true;
+        fi;
+        return false;
     fi;
 end;
 
@@ -253,9 +279,12 @@ is_irreducible_ext:=function(rec_tspace, EXT)
         EXT_a2:=get_ext_from_part(fPart);
 #        Print("EXT_a1=", EXT_a1, "\n");
 #        Print("EXT_a2=", EXT_a2, "\n");
-        EXT_b1:=get_space_family(EXT_a1, rec_tspace.l_spanning_elements);
-        EXT_b2:=get_space_family(EXT_a2, rec_tspace.l_spanning_elements);
+        EXT_b1:=get_space_family(EXT_a1, l_gens);
+        EXT_b2:=get_space_family(EXT_a2, l_gens);
         if are_space_split(EXT_b1, EXT_b2) then
+            Print("Finding a splitting with\n");
+            Print("EXT_a1=", EXT_a1, "\n");
+            Print("EXT_a2=", EXT_a2, "\n");
             return false;
         fi;
     od;
@@ -542,15 +571,17 @@ end;
 is_irreducible_both_method:=function(k, d, EXT)
     local rec_tspace, test1, test2, test2_not;
     Print("---------------------------------------------------------------------------------------\n");
-    Print("is_irreducible_both_method, step 1\n");
+    Print("is_irreducible_both_method, step 1 |EXT|=", Length(EXT), "\n");
     rec_tspace:=get_rec_tspace(k, d);
     Print("is_irreducible_both_method, step 2\n");
     test1:=is_irreducible_ext(rec_tspace, EXT);
-    Print("is_irreducible_both_method, step 3 |EXT|=", Length(EXT), "\n");
+    Print("is_irreducible_both_method, step 3, test1=", test1, "\n");
     test2:=is_direct_extension(k, d, EXT);
-    Print("is_irreducible_both_method, step 4\n");
+    Print("is_irreducible_both_method, step 4, test2=", test2, "\n");
     test2_not:=not test2;
     if test1<>test2_not then
+        Print("EXT=\n");
+        PrintArray(EXT);
         Error("Both method return different results");
     fi;
     Print("is_irreducible_both_method, step 5\n");

@@ -42,8 +42,8 @@ process_example:=function(d)
 end;
 
 process_example(-3);
-#process_example(-4);
-#process_example(-7);
-#process_example(-8);
-#process_example(-11);
+process_example(-4);
+process_example(-7);
+process_example(-8);
+process_example(-11);
 
