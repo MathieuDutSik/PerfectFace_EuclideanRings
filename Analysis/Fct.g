@@ -193,7 +193,7 @@ end;
 
 
 are_space_split:=function(EXT1, EXT2)
-    local dim, EXT1_red, EXT2_red, NSP1, NSP2, Sum_NSP, rnk;
+    local dim, EXT1_red, EXT2_red, get_int_nsp, EXT1_sat, EXT2_sat, EXT12_sum, NSP1, NSP2, Sum_NSP, rnk, det;
     dim:=Length(EXT1[1]);
     EXT1_red:=RowReduction(EXT1).EXT;
     EXT2_red:=RowReduction(EXT2).EXT;
