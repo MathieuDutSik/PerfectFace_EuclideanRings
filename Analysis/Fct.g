@@ -245,7 +245,6 @@ end;
 
 get_cells:=function(k, d, index)
     local desc, only_well_rounded;
-
     only_well_rounded:=true;
     desc:=GenerateTspaceDescription_imag_quad(k, d, only_well_rounded);
     return PERFCOMP_get_cells(desc, index);
@@ -282,6 +281,14 @@ get_upper_cells:=function(k, d, index)
     only_well_rounded:=true;
     desc:=GenerateTspaceDescription_imag_quad(k, d, only_well_rounded);
     return PERFCOMP_get_upper_cells(desc, index);
+end;
+
+
+my_get_rec_tspace:=function(k, d)
+    local desc, only_well_rounded;
+    only_well_rounded:=true;
+    desc:=GenerateTspaceDescription_imag_quad(k, d, only_well_rounded);
+    return get_rec_tspace(desc);
 end;
 
 
@@ -328,7 +335,7 @@ is_irreducible_both_method:=function(k, d, EXT)
     local rec_tspace, test1, test2, test2_not;
     Print("---------------------------------------------------------------------------------------\n");
     Print("is_irreducible_both_method, step 1 |EXT|=", Length(EXT), "\n");
-    rec_tspace:=get_rec_tspace(k, d);
+    rec_tspace:=my_get_rec_tspace(k, d);
     Print("is_irreducible_both_method, step 2\n");
     test1:=is_irreducible_ext(rec_tspace, EXT);
     Print("is_irreducible_both_method, step 3, test1=", test1, "\n");

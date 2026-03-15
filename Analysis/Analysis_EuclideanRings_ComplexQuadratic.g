@@ -10,11 +10,9 @@ get_grp:=function()
     #ListValue:=[-3];
     ListEntries:=[];
     ListGRP:=[];
-    only_well_rounded:=true;
     for value in ListValue
     do
-        desc:=GenerateTspaceDescription_imag_quad(3, value, only_well_rounded);
-        RecTspace:=get_rec_tspace(desc);
+        RecTspace:=my_get_rec_tspace(3, value);
         entry:=rec(value:=value, rec_tspace:=RecTspace);
         GRP:=Group(entry.rec_tspace.PtStabGens);
         Add(ListGRP, GRP);
