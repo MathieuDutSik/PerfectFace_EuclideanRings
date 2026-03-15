@@ -1,36 +1,6 @@
 # T-space helper for (k,d). Uses polyhedral_common TSPACE_FileFormatConversion.
-
-# Local copies from polyhedral_common/CI_tests/common.g
-RemoveFileIfExist:=function(FileName)
-    if IsExistingFile(FileName) then
-        RemoveFile(FileName);
-    fi;
-end;
-
-WriteMatrixStream:=function(output, EXT)
-    local eEXT, eVal;
-    AppendTo(output, Length(EXT), " ", Length(EXT[1]), "\n");
-    for eEXT in EXT
-    do
-        for eVal in eEXT
-        do
-            AppendTo(output, " ", eVal);
-        od;
-        AppendTo(output, "\n");
-    od;
-end;
-
-
-GetBinaryFilename:=function(FileName)
-    local TmpFile, list_lines;
-    TmpFile:=Filename(DirectoryTemporary(), "Test.in");
-    Exec("which ", FileName, " > ", TmpFile);
-    list_lines:=ReadTextFile(TmpFile);
-    if Length(list_lines)=0 then
-        return fail;
-    fi;
-    return list_lines[1];
-end;
+Read("common.g");
+Read("access_points.g");
 
 
 GetFundamentalInfo:=function(d)
@@ -60,52 +30,6 @@ GetFundamentalInfo:=function(d)
       type_tspace:="RealQuad";
   fi;
   return rec(eSum:=eSum, eProd:=eProd, IsCorrect:=IsCorrect, type_tspace:=type_tspace);
-end;
-
-get_rec_tspace:=function(k, d)
-    local info, FileNml, FileOut, binary, output, cmd, tspace;
-
-    info:=GetFundamentalInfo(d);
-    if info.IsCorrect=false then
-        Print("Discriminant d=", d, " is not valid, skipping\n");
-        return fail;
-    fi;
-
-    FileNml:=Concatenation("Tspace_", String(k), "_", String(d), ".nml");
-    FileOut:=Concatenation("Tspace_", String(k), "_", String(d), ".gap");
-
-    RemoveFileIfExist(FileNml);
-    RemoveFileIfExist(FileOut);
-
-    output:=OutputTextFile(FileNml, true);
-    AppendTo(output, "&TSPACE\n");
-    AppendTo(output, " TypeTspace = \"", info.type_tspace, "\"\n");
-    AppendTo(output, " FileLinSpa = \"unset.linspa\"\n");
-    AppendTo(output, " SuperMatMethod = \"NotNeeded\"\n");
-    AppendTo(output, " ListComm = \"Use_realimag\"\n");
-#    AppendTo(output, " PtGroupMethod = \"Trivial\"\n");
-    AppendTo(output, " PtGroupMethod = \"Compute\"\n");
-    AppendTo(output, " FileListSubspaces = \"unset\"\n");
-    AppendTo(output, " RealImagDim = ", k, "\n");
-    AppendTo(output, " RealImagSum = ", info.eSum, "\n");
-    AppendTo(output, " RealImagProd = ", info.eProd, "\n");
-    AppendTo(output, "/\n");
-    CloseStream(output);
-
-    binary:=GetBinaryFilename("TSPACE_FileFormatConversion");
-    cmd:=Concatenation(binary, " ", FileNml, " GAP ", FileOut);
-    Exec(cmd);
-
-    if IsExistingFile(FileOut)=false then
-        Error("The output file is not existing. That qualifies as a fail");
-    fi;
-
-    tspace:=ReadAsFunction(FileOut)();
-
-    RemoveFileIfExist(FileNml);
-    RemoveFileIfExist(FileOut);
-
-    return tspace;
 end;
 
 FindSplittingCombinatorial:=function(l_gens, EXT)
@@ -318,214 +242,46 @@ direct_sum:=function(EXT1, EXT2)
     return EXT;
 end;
 
-append_initial_tspace:=function(output, k, d)
-    local info, CacheFile;
-    info:=GetFundamentalInfo(d);
-    CacheFile:=Concatenation("Cache_", String(k), "_", String(d));
-    AppendTo(output, "&TSPACE\n");
-    AppendTo(output, " TypeTspace = \"", info.type_tspace, "\"\n");
-    AppendTo(output, " FileLinSpa = \"unset.linspa\"\n");
-    AppendTo(output, " SuperMatMethod = \"NotNeeded\"\n");
-    AppendTo(output, " ListComm = \"Use_realimag\"\n");
-#    AppendTo(output, " PtGroupMethod = \"Trivial\"\n");
-    AppendTo(output, " PtGroupMethod = \"Compute\"\n");
-    AppendTo(output, " FileListSubspaces = \"unset\"\n");
-    AppendTo(output, " RealImagDim = ", k, "\n");
-    AppendTo(output, " RealImagSum = ", info.eSum, "\n");
-    AppendTo(output, " RealImagProd = ", info.eProd, "\n");
-    AppendTo(output, "/\n");
-    AppendTo(output, "\n");
-    AppendTo(output, "&DATA\n");
-    AppendTo(output, " arithmetic_T = \"gmp_rational\"\n");
-    AppendTo(output, " arithmetic_Tint = \"gmp_integer\"\n");
-    AppendTo(output, " OnlyWellRounded = T\n");
-    AppendTo(output, " ComputeBoundary = T\n");
-    AppendTo(output, " ComputeContractingHomotopy = T\n");
-    AppendTo(output, " CacheFile = \"", CacheFile, "\"\n");
-    AppendTo(output, "/\n");
-    AppendTo(output, "\n");
-end;
-
-
-
 
 get_cells:=function(k, d, index)
-    local TmpDir, FileNml, FileCells, output, binary, cmd, ListCells;
-    TmpDir:=DirectoryTemporary();
+    local desc, only_well_rounded;
 
-    FileNml:=Filename(TmpDir, "Input.nml");
-    FileCells:=Filename(TmpDir, "Input.gap");
-
-    output:=OutputTextFile(FileNml, true);
-    append_initial_tspace(output, k, d);
-    AppendTo(output, "&QUERIES\n");
-    AppendTo(output, " FileCells = \"", FileCells, "\"\n");
-    AppendTo(output, " IndexCell = ", index, "\"\n");
-    AppendTo(output, "/\n");
-    CloseStream(output);
-
-    binary:=GetBinaryFilename("PERF_SerialPerfectComputation");
-    cmd:=Concatenation(binary, " ", FileNml);
-    Exec(cmd);
-
-    if IsExistingFile(FileCells)=false then
-        Error("The output file is not existing. That qualifies as a fail");
-    fi;
-
-    ListCells:=ReadAsFunction(FileCells)();
-    RemoveFileIfExist(FileCells);
-    RemoveFileIfExist(FileNml);
-    return ListCells;
+    only_well_rounded:=true;
+    desc:=GenerateTspaceDescription_imag_quad(k, d, only_well_rounded);
+    return PERFCOMP_get_cells(desc, index);
 end;
 
 test_equivalent_cells:=function(k, d, EXT1, EXT2)
-    local TmpDir, FileNml, FileEquiv, FileEquivOutput, output, binary, cmd, ListEquivOutput, eEquiv, EXT1_img, EXT2_img;
-    TmpDir:=DirectoryTemporary();
-
-    FileNml:=Filename(TmpDir, "Input.nml");
-    FileEquiv:=Filename(TmpDir, "Computation");
-    FileEquivOutput:=Filename(TmpDir, "Computation.output");
-
-    output:=OutputTextFile(FileEquiv, true);
-    AppendTo(output, "2\n");
-    WriteMatrixStream(output, EXT1);
-    WriteMatrixStream(output, EXT2);
-    CloseStream(output);
-
-    output:=OutputTextFile(FileNml, true);
-    append_initial_tspace(output, k, d);
-    AppendTo(output, "&QUERIES\n");
-    AppendTo(output, " FileEquivalenceQueries = \"", FileEquiv, "\"\n");
-    AppendTo(output, "/\n");
-    CloseStream(output);
-
-    binary:=GetBinaryFilename("PERF_SerialPerfectComputation");
-    cmd:=Concatenation(binary, " ", FileNml);
-    Exec(cmd);
-
-    if IsExistingFile(FileEquivOutput)=false then
-        Error("The output file is not existing. That qualifies as a fail");
-    fi;
-
-    ListEquivOutput:=ReadAsFunction(FileEquivOutput)();
-    eEquiv:=ListEquivOutput[1];
-    if eEquiv<>fail then
-        Print("eEquiv=", eEquiv, "\n");
-        EXT1_img:=Set(EXT1 * eEquiv);
-        EXT2_img:=Set(EXT2);
-        Print("EXT1_img=", EXT1_img, "\n");
-        Print("EXT2_img=", EXT2_img, "\n");
-        if EXT1_img<>EXT2_img then
-            Error("The equivalence is not actually one");
-        fi;
-    fi;
-    RemoveFileIfExist(FileNml);
-    RemoveFileIfExist(FileEquiv);
-    RemoveFileIfExist(FileEquivOutput);
-    return eEquiv;
+    local desc, only_well_rounded;
+    only_well_rounded:=true;
+    desc:=GenerateTspaceDescription_imag_quad(k, d, only_well_rounded);
+    return PERFCOMP_test_equivalence(desc, EXT1, EXT2);
 end;
 
 
 get_cell_stabilizer:=function(k, d, EXT)
-    local TmpDir, FileNml, FileStab, FileStabOutput, output, binary, cmd, ListStabOutput, eStab, eGen, SetEXT, EXT_img_set;
-    TmpDir:=DirectoryTemporary();
-
-    FileNml:=Filename(TmpDir, "Input.nml");
-    FileStab:=Filename(TmpDir, "Computation");
-    FileStabOutput:=Filename(TmpDir, "Computation.output");
-
-    output:=OutputTextFile(FileStab, true);
-    AppendTo(output, "1\n");
-    WriteMatrixStream(output, EXT);
-    CloseStream(output);
-
-    output:=OutputTextFile(FileNml, true);
-    append_initial_tspace(output, k, d);
-    AppendTo(output, "&QUERIES\n");
-    AppendTo(output, " FileStabilizerQueries = \"", FileStab, "\"\n");
-    AppendTo(output, "/\n");
-    CloseStream(output);
-
-    binary:=GetBinaryFilename("PERF_SerialPerfectComputation");
-    cmd:=Concatenation(binary, " ", FileNml);
-    Exec(cmd);
-
-    if IsExistingFile(FileStabOutput)=false then
-        Error("The output file is not existing. That qualifies as a fail");
-    fi;
-
-    ListStabOutput:=ReadAsFunction(FileStabOutput)();
-    eStab:=ListStabOutput[1];
-    SetEXT:=Set(EXT);
-    for eGen in GeneratorsOfGroup(eStab)
-    do
-        EXT_img_set:=Set(EXT * eGen);
-        if EXT_img_set<>SetEXT then
-            Error("The matrix does not preserve EXT");
-        fi;
-    od;
-    RemoveFileIfExist(FileNml);
-    RemoveFileIfExist(FileStab);
-    RemoveFileIfExist(FileStabOutput);
-    return eStab;
+    local desc, only_well_rounded;
+    only_well_rounded:=true;
+    desc:=GenerateTspaceDescription_imag_quad(k, d, only_well_rounded);
+    return PERFCOMP_stabilizer(desc, EXT);
 end;
 
 get_lower_cells:=function(k, d, index)
-    local TmpDir, FileNml, FileListLower, output, binary, cmd, ListLower;
-    TmpDir:=DirectoryTemporary();
-
-    FileNml:=Filename(TmpDir, "Input.nml");
-    FileListLower:=Filename(TmpDir, "Result");
-
-    output:=OutputTextFile(FileNml, true);
-    append_initial_tspace(output, k, d);
-    AppendTo(output, "&QUERIES\n");
-    AppendTo(output, " FileListLowerBoundary = \"", FileListLower, "\"\n");
-    AppendTo(output, " IndexLowerBoundary = ", index, "\n");
-    AppendTo(output, "/\n");
-    CloseStream(output);
-
-    binary:=GetBinaryFilename("PERF_SerialPerfectComputation");
-    cmd:=Concatenation(binary, " ", FileNml);
-    Exec(cmd);
-
-    if IsExistingFile(FileListLower)=false then
-        Error("The output file is not existing. That qualifies as a fail");
-    fi;
-
-    ListLower:=ReadAsFunction(FileListLower)();
-    RemoveFileIfExist(FileNml);
-    RemoveFileIfExist(FileListLower);
-    return ListLower;
+    local desc, only_well_rounded;
+    only_well_rounded:=true;
+    desc:=GenerateTspaceDescription_imag_quad(k, d, only_well_rounded);
+    return PERFCOMP_get_lower_cells(desc, index);
 end;
 
+
+
+
+
 get_upper_cells:=function(k, d, index)
-    local TmpDir, FileNml, FileListUpper, output, binary, cmd, ListUpper;
-    TmpDir:=DirectoryTemporary();
-
-    FileNml:=Filename(TmpDir, "Input.nml");
-    FileListUpper:=Filename(TmpDir, "Result");
-
-    output:=OutputTextFile(FileNml, true);
-    append_initial_tspace(output, k, d);
-    AppendTo(output, "&QUERIES\n");
-    AppendTo(output, " FileListUpperBoundary = \"", FileListUpper, "\"\n");
-    AppendTo(output, " IndexUpperBoundary = ", index, "\n");
-    AppendTo(output, "/\n");
-    CloseStream(output);
-
-    binary:=GetBinaryFilename("PERF_SerialPerfectComputation");
-    cmd:=Concatenation(binary, " ", FileNml);
-    Exec(cmd);
-
-    if IsExistingFile(FileListUpper)=false then
-        Error("The output file is not existing. That qualifies as a fail");
-    fi;
-
-    ListUpper:=ReadAsFunction(FileListUpper)();
-    RemoveFileIfExist(FileNml);
-    RemoveFileIfExist(FileListUpper);
-    return ListUpper;
+    local desc, only_well_rounded;
+    only_well_rounded:=true;
+    desc:=GenerateTspaceDescription_imag_quad(k, d, only_well_rounded);
+    return PERFCOMP_get_upper_cells(desc, index);
 end;
 
 
@@ -604,3 +360,9 @@ get_cells_with_irreducibility:=function(k, d, index)
     return ListCells;
 end;
 
+get_upper_graphs:=function(k, d, index)
+    local list_upp0, list_upp1;
+    list_upp0:=get_upper_cells(k, d, index);
+    list_upp1:=get_upper_cells(k, d, index-1);
+    Print(NullMat(5));
+end;
