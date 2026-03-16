@@ -367,9 +367,45 @@ get_cells_with_irreducibility:=function(k, d, index)
     return ListCells;
 end;
 
+get_graph:=function(ListEXT1, ListEXT2)
+    local n_vert1, n_vert2, GRA, i1, i2;
+    n_vert1:=Length(ListEXT1);
+    n_vert2:=Length(ListEXT2);
+    GRA:=NullGraph(Group(()), n_vert1 + n_vert2);
+    for i1 in [1..n_vert1]
+    do
+        for i2 in [1..n_vert2]
+        do
+            if IsSubset(ListEXT2[i2], ListEXT1[i1]) then
+                AddEdgeOrbit(GRA, [i1, n_vert1+i2]);
+                AddEdgeOrbit(GRA, [n_vert1+i2, i1]);
+            fi;
+        od;
+    od;
+    return GRA;
+end;
+
+
 get_upper_graphs:=function(k, d, index)
     local list_upp0, list_upp1;
     list_upp0:=get_upper_cells(k, d, index);
     list_upp1:=get_upper_cells(k, d, index-1);
-    Print(NullMat(5));
+    list_cell1:=get_cells(k, d, index-1);
+    ListGraph:=[];
+    for i in [1..Length(list_upp0)]
+    do
+        ListEXT1:=List(list_upp0[i].ListEXT, Set);
+        ListEXT2:=Set([]);
+        for eMap in list_upp0[i].ListMap
+        do
+            for EXT in list_upp1[eMap.jOrb].ListEXT
+            do
+                EXT2:=Set(EXT * eMap.M);
+                AddSet(ListEXT2, EXT2);
+            od;
+        od;
+        GRA:=get_graph(ListEXT1, ListEXT2);
+        Add(ListGraph, GRA);
+    od;
+    return ListGraph;
 end;
