@@ -387,7 +387,7 @@ end;
 
 
 get_upper_graphs:=function(k, d, index)
-    local list_upp0, list_upp1;
+    local list_upp0, list_upp1, list_cell1, ListGraph, ListEXT1, ListEXT2, ListEXT1_iOrb, ListEXT2_iOrb, pos, eMap, fMap, i, len, EXT, EXT2, GRA;
     list_upp0:=get_upper_cells(k, d, index);
     list_upp1:=get_upper_cells(k, d, index-1);
     list_cell1:=get_cells(k, d, index-1);
@@ -395,17 +395,27 @@ get_upper_graphs:=function(k, d, index)
     for i in [1..Length(list_upp0)]
     do
         ListEXT1:=List(list_upp0[i].ListEXT, Set);
-        ListEXT2:=Set([]);
+        ListEXT2:=[];
+        ListEXT1_iOrb:=[];
+        ListEXT2_iOrb:=[];
         for eMap in list_upp0[i].ListMap
         do
-            for EXT in list_upp1[eMap.jOrb].ListEXT
+            Add(ListEXT1_iOrb, eMap.jOrb);
+            len:=Length(list_upp1[eMap.jOrb].ListEXT);
+            for i in [1..len]
             do
+                EXT:=list_upp1[eMap.jOrb].ListEXT[i];
+                fMap:=list_upp1[eMap.jOrb].ListMap[i];
                 EXT2:=Set(EXT * eMap.M);
-                AddSet(ListEXT2, EXT2);
+                pos:=Position(ListEXT2, EXT2);
+                if pos=fail then
+                    Add(ListEXT2, EXT2);
+                    Add(ListEXT2_iOrb, fMap.jOrb);
+                fi;
             od;
         od;
         GRA:=get_graph(ListEXT1, ListEXT2);
         Add(ListGraph, GRA);
     od;
-    return ListGraph;
+    return [ListGraph, ListEXT1_iOrb, ListEXT2_iOrb];
 end;
