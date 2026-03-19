@@ -50,7 +50,7 @@ FindSplittingCombinatorial:=function(l_gens, EXT)
         od;
     od;
     Lconn:=ConnectedComponents(GRA);
-    Print("FindSplittingCombinatorial, Lconn=", Lconn, "\n");
+#    Print("FindSplittingCombinatorial, Lconn=", Lconn, "\n");
     return List(Lconn, eConn->EXT{eConn});
 end;
 
@@ -121,7 +121,7 @@ are_space_split:=function(EXT1, EXT2)
     dim:=Length(EXT1[1]);
     EXT1_red:=RowReduction(EXT1).EXT;
     EXT2_red:=RowReduction(EXT2).EXT;
-    Print("are_space_split |EXT1_red|=", Length(EXT1_red), " |EXT2_red|=", Length(EXT2_red), " dim=", dim, "\n");
+#    Print("are_space_split |EXT1_red|=", Length(EXT1_red), " |EXT2_red|=", Length(EXT2_red), " dim=", dim, "\n");
     get_int_nsp:=function(EXTin)
         if Length(EXTin)=0 then
             return IdentityMat(dim);
@@ -149,13 +149,13 @@ are_space_split:=function(EXT1, EXT2)
 #        det2:=AbsInt(DeterminantMat(BaseIntMat(Expr2)));
         EXT12_sum:=Concatenation(EXT1_sat, EXT2_sat);
         det:=AbsInt(DeterminantMat(EXT12_sum));
-        Print("det=", det, "\n");
+#        Print("det=", det, "\n");
 #        Print("det=", det, " det1=", det1, " det2=", det2, "\n");
         if det = 1 then
-            Print("EXT1_sat=\n");
-            PrintArray(EXT1_sat);
-            Print("EXT2_sat=\n");
-            PrintArray(EXT2_sat);
+#            Print("EXT1_sat=\n");
+#            PrintArray(EXT1_sat);
+#            Print("EXT2_sat=\n");
+#            PrintArray(EXT2_sat);
             return true;
         fi;
         return false;
@@ -189,16 +189,16 @@ is_irreducible_ext:=function(rec_tspace, EXT)
     od;
     Lconn:=FindSplittingCombinatorial(l_gens, EXT);
     nConn:=Length(Lconn);
-    Print("nConn=", nConn, "\n");
+#    Print("nConn=", nConn, "\n");
     get_ext_from_part:=function(eP)
         return Concatenation(Lconn{eP});
     end;
     Lpart:=Filtered(Combinations([1..nConn]), x->Length(x)>0 and Length(x)<nConn);
-    Print("Lpart=", Lpart, "\n");
+#    Print("Lpart=", Lpart, "\n");
     for ePart in Lpart
     do
         fPart:=Difference([1..nConn], ePart);
-        Print("ePart=", ePart, " fPart=", fPart, "\n");
+#        Print("ePart=", ePart, " fPart=", fPart, "\n");
         EXT_a1:=get_ext_from_part(ePart);
         EXT_a2:=get_ext_from_part(fPart);
 #        Print("EXT_a1=", EXT_a1, "\n");
@@ -206,9 +206,9 @@ is_irreducible_ext:=function(rec_tspace, EXT)
         EXT_b1:=get_space_family(EXT_a1, l_gens);
         EXT_b2:=get_space_family(EXT_a2, l_gens);
         if are_space_split(EXT_b1, EXT_b2) then
-            Print("Finding a splitting with\n");
-            Print("EXT_a1=", EXT_a1, "\n");
-            Print("EXT_a2=", EXT_a2, "\n");
+#            Print("Finding a splitting with\n");
+#            Print("EXT_a1=", EXT_a1, "\n");
+#            Print("EXT_a2=", EXT_a2, "\n");
             return false;
         fi;
     od;
@@ -299,31 +299,31 @@ end;
 # Check whether it is an extension from a lower dimensional cell
 is_direct_extension:=function(k, d, EXT)
     local dim_space, perf_rank, EXTone_dim_cell, dim_lower_space, perf_rank_lower, index_lower, RecLower, EXTsum, eEquiv, ListCellLower;
-    Print("is_direct_extension, step 1, k=", k, "\n");
+#    Print("is_direct_extension, step 1, k=", k, "\n");
     dim_space:=k*k;
     perf_rank:=get_perfect_rank(k, d, EXT);
-    Print("is_direct_extension, step 2\n");
+#    Print("is_direct_extension, step 2\n");
     EXTone_dim_cell:=get_cells(1, d, 0)[1].EXT;
-    Print("is_direct_extension, step 3\n");
+#    Print("is_direct_extension, step 3\n");
     dim_lower_space:=(k-1)*(k-1);
     perf_rank_lower:=perf_rank - 1;
-    Print("is_direct_extension, step 4\n");
+#    Print("is_direct_extension, step 4\n");
     index_lower:=dim_lower_space - perf_rank_lower;
-    Print("is_direct_extension, step 5, index_lower=", index_lower, "\n");
+#    Print("is_direct_extension, step 5, index_lower=", index_lower, "\n");
     ListCellLower:=get_cells(k-1, d, index_lower);
-    Print("is_direct_extension, step 6\n");
+#    Print("is_direct_extension, step 6\n");
     for RecLower in ListCellLower
     do
         EXTsum:=direct_sum(RecLower.EXT, EXTone_dim_cell);
-        Print("is_direct_extension, We have EXTsum\n");
+#        Print("is_direct_extension, We have EXTsum\n");
 #        Print("EXT=\n");
 #        PrintArray(EXT);
 #        Print("EXTsum=\n");
 #        PrintArray(EXTsum);
 #        Print("Set(EXT) = Set(EXTsum)=", Set(EXT) = Set(EXTsum), "\n");
         eEquiv:=test_equivalent_cells(k, d, EXT, EXTsum);
-        Print("is_direct_extension, We have eEquiv\n");
-        Print("eEquiv=", eEquiv, "\n");
+#        Print("is_direct_extension, We have eEquiv\n");
+#        Print("eEquiv=", eEquiv, "\n");
         if eEquiv<>fail then
             return true;
         fi;
@@ -333,21 +333,21 @@ end;
 
 is_irreducible_both_method:=function(k, d, EXT)
     local rec_tspace, test1, test2, test2_not;
-    Print("---------------------------------------------------------------------------------------\n");
-    Print("is_irreducible_both_method, step 1 |EXT|=", Length(EXT), "\n");
+#    Print("---------------------------------------------------------------------------------------\n");
+#    Print("is_irreducible_both_method, step 1 |EXT|=", Length(EXT), "\n");
     rec_tspace:=my_get_rec_tspace(k, d);
-    Print("is_irreducible_both_method, step 2\n");
+#    Print("is_irreducible_both_method, step 2\n");
     test1:=is_irreducible_ext(rec_tspace, EXT);
-    Print("is_irreducible_both_method, step 3, test1=", test1, "\n");
+#    Print("is_irreducible_both_method, step 3, test1=", test1, "\n");
     test2:=is_direct_extension(k, d, EXT);
-    Print("is_irreducible_both_method, step 4, test2=", test2, "\n");
+#    Print("is_irreducible_both_method, step 4, test2=", test2, "\n");
     test2_not:=not test2;
     if test1<>test2_not then
         Print("EXT=\n");
         PrintArray(EXT);
         Error("Both method return different results");
     fi;
-    Print("is_irreducible_both_method, step 5\n");
+#    Print("is_irreducible_both_method, step 5\n");
     return test1;
 end;
 
@@ -387,35 +387,88 @@ end;
 
 
 get_upper_graphs:=function(k, d, index)
-    local list_upp0, list_upp1, list_cell1, ListGraph, ListEXT1, ListEXT2, ListEXT1_iOrb, ListEXT2_iOrb, pos, eMap, fMap, i, len, EXT, EXT2, GRA;
+    local list_upp0, list_upp1, list_cell1, ListGraphInfo, ListEXT1, ListEXT2, ListEXT1_iOrb, ListEXT2_iOrb, pos, eMap, fMap, i, len, EXT, EXT2, GRA, graph_info, i_ent;
     list_upp0:=get_upper_cells(k, d, index);
     list_upp1:=get_upper_cells(k, d, index-1);
     list_cell1:=get_cells(k, d, index-1);
-    ListGraph:=[];
+    ListGraphInfo:=[];
     for i in [1..Length(list_upp0)]
     do
         ListEXT1:=List(list_upp0[i].ListEXT, Set);
-        ListEXT2:=[];
+        ListEXT2:=Set([]);
+        for eMap in list_upp0[i].ListMap
+        do
+            len:=Length(list_upp1[eMap.jOrb].ListEXT);
+            for i_ent in [1..len]
+            do
+                EXT:=list_upp1[eMap.jOrb].ListEXT[i_ent];
+                EXT2:=Set(EXT * eMap.M);
+                AddSet(ListEXT2, EXT2);
+            od;
+        od;
         ListEXT1_iOrb:=[];
-        ListEXT2_iOrb:=[];
+        ListEXT2_iOrb:=ListWithIdenticalEntries(Length(ListEXT2), -1);
         for eMap in list_upp0[i].ListMap
         do
             Add(ListEXT1_iOrb, eMap.jOrb);
             len:=Length(list_upp1[eMap.jOrb].ListEXT);
-            for i in [1..len]
+            for i_ent in [1..len]
             do
-                EXT:=list_upp1[eMap.jOrb].ListEXT[i];
-                fMap:=list_upp1[eMap.jOrb].ListMap[i];
+                EXT:=list_upp1[eMap.jOrb].ListEXT[i_ent];
+                fMap:=list_upp1[eMap.jOrb].ListMap[i_ent];
                 EXT2:=Set(EXT * eMap.M);
                 pos:=Position(ListEXT2, EXT2);
-                if pos=fail then
-                    Add(ListEXT2, EXT2);
-                    Add(ListEXT2_iOrb, fMap.jOrb);
+                if pos<>fail then
+                    ListEXT2_iOrb[pos]:=fMap.jOrb;
                 fi;
             od;
         od;
         GRA:=get_graph(ListEXT1, ListEXT2);
-        Add(ListGraph, GRA);
+        graph_info:=rec(Graph:=GRA, ListEXT1:=ListEXT1, ListEXT2:=ListEXT2, ListEXT1_iOrb:=ListEXT1_iOrb, ListEXT2_iOrb:=ListEXT2_iOrb);
+        Add(ListGraphInfo, graph_info);
     od;
-    return [ListGraph, ListEXT1_iOrb, ListEXT2_iOrb];
+    return ListGraphInfo;
 end;
+
+get_lower_graphs:=function(k, d, index)
+    local list_low0, list_low1, list_cell1, ListGraphInfo, ListEXT1, ListEXT2, ListEXT1_iOrb, ListEXT2_iOrb, pos, eBnd, fBnd, i, len, EXT, EXT1, GRA, graph_info, i_ent;
+    list_low0:=get_lower_cells(k, d, index);
+    list_low1:=get_lower_cells(k, d, index+1);
+    list_cell1:=get_cells(k, d, index-1);
+    ListGraphInfo:=[];
+    for i in [1..Length(list_low0)]
+    do
+        ListEXT2:=List(list_low0[i].ListBnd, x->Set(x.EXT));
+        ListEXT1:=Set([]);
+        for eBnd in list_low0[i].ListBnd
+        do
+            len:=Length(list_low1[eBnd.jOrb].ListBnd);
+            for i_ent in [1..len]
+            do
+                EXT:=list_low1[eBnd.jOrb].ListBnd[i_ent].EXT;
+                EXT1:=Set(EXT * eBnd.M);
+                AddSet(ListEXT1, EXT1);
+            od;
+        od;
+        ListEXT1_iOrb:=ListWithIdenticalEntries(Length(ListEXT2), -1);
+        ListEXT2_iOrb:=[];
+        for eBnd in list_low0[i].ListBnd
+        do
+            Add(ListEXT2_iOrb, eBnd.jOrb);
+            len:=Length(list_low1[eBnd.jOrb].ListBnd);
+            for i_ent in [1..len]
+            do
+                fBnd:=list_low1[eBnd.jOrb].ListBnd[i_ent];
+                EXT:=fBnd.EXT;
+                EXT1:=Set(fBnd.EXT * eBnd.M);
+                pos:=Position(ListEXT1, EXT1);
+                ListEXT1_iOrb[pos]:=fBnd.jOrb;
+            od;
+        od;
+        GRA:=get_graph(ListEXT1, ListEXT2);
+        graph_info:=rec(Graph:=GRA, ListEXT1:=ListEXT1, ListEXT2:=ListEXT2, ListEXT1_iOrb:=ListEXT1_iOrb, ListEXT2_iOrb:=ListEXT2_iOrb);
+        Add(ListGraphInfo, graph_info);
+    od;
+    return ListGraphInfo;
+end;
+

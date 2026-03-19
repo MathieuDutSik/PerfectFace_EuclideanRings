@@ -22,7 +22,7 @@ end;
 
 
 process_example:=function(d)
-    local ListCells2, ListCells3, ListCells4, ListLower3, ListLower4, ListUpper2, ListUpper3, ListGraph2, RecSave, FileSave;
+    local ListCells2, ListCells3, ListCells4, ListLower3, ListLower4, ListUpper2, ListUpper3, ListUpperGraph2, ListLowerGraph4, RecSave, FileSave;
     ListCells2:=get_cells_with_irreducibility(3, d, 6);
     ListCells3:=get_cells_with_irreducibility(3, d, 5);
     ListCells4:=get_cells_with_irreducibility(3, d, 4);
@@ -33,19 +33,21 @@ process_example:=function(d)
     ListUpper2:=get_upper_cells(3, d, 6);
     ListUpper3:=get_upper_cells(3, d, 5);
 
-    ListGraph2:=get_upper_graphs(3, d, 6);
+    ListUpperGraph2:=get_upper_graphs(3, d, 6);
+    ListLowerGraph4:=get_lower_graphs(3, d, 4);
 
     RecSave:=rec(ListCells2:=ListCells2, ListCells3:=ListCells3, ListCells4:=ListCells4,
                  ListLower3:=ListLower3, ListLower4:=ListLower4,
                  ListUpper2:=ListUpper2, ListUpper3:=ListUpper3,
-                 ListGraph2:=ListGraph2);
+                 ListUpperGraph2:=ListUpperGraph2,
+                 ListLowerGraph4:=ListLowerGraph4);
     FileSave:=Concatenation("Enumeration_3_", String(d), ".gap");
     SaveDataToFile(FileSave, RecSave);
 end;
 
 process_example(-3);
 process_example(-4);
-process_example(-7);
-process_example(-8);
-process_example(-11);
+#process_example(-7);
+#process_example(-8);
+#process_example(-11);
 
