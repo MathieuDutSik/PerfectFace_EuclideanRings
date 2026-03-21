@@ -389,8 +389,8 @@ end;
 get_upper_graphs:=function(k, d, index)
     local list_upp0, list_upp1, list_cell1, ListGraphInfo, ListEXT1, ListEXT2, ListEXT1_iOrb, ListEXT2_iOrb, pos, eMap, fMap, i, len, EXT, EXT2, GRA, graph_info, i_ent;
     list_upp0:=get_upper_cells(k, d, index);
-    list_upp1:=get_upper_cells(k, d, index-1);
-    list_cell1:=get_cells(k, d, index-1);
+    list_upp1:=get_upper_cells(k, d, index - 1);
+    list_cell1:=get_cells(k, d, index - 1);
     ListGraphInfo:=[];
     for i in [1..Length(list_upp0)]
     do
@@ -431,35 +431,37 @@ get_upper_graphs:=function(k, d, index)
 end;
 
 get_lower_graphs:=function(k, d, index)
-    local list_low0, list_low1, list_cell1, ListGraphInfo, ListEXT1, ListEXT2, ListEXT1_iOrb, ListEXT2_iOrb, pos, eBnd, fBnd, i, len, EXT, EXT1, GRA, graph_info, i_ent;
+    local list_low0, list_low1, list_cells2, ListGraphInfo, ListEXT1, ListEXT2, ListEXT1_iOrb, ListEXT2_iOrb, pos, eBnd, fBnd, i, len, EXT, EXT1, EXT1_b, GRA, graph_info, i_ent, n_call;
     list_low0:=get_lower_cells(k, d, index);
-    list_low1:=get_lower_cells(k, d, index+1);
-    list_cell1:=get_cells(k, d, index-1);
+    list_low1:=get_lower_cells(k, d, index + 1);
+    list_cells2:=get_cells(k, d, index + 2);
     ListGraphInfo:=[];
     for i in [1..Length(list_low0)]
     do
         ListEXT2:=List(list_low0[i].ListBnd, x->Set(x.EXT));
         ListEXT1:=Set([]);
+        n_call:=0;
         for eBnd in list_low0[i].ListBnd
         do
-            len:=Length(list_low1[eBnd.jOrb].ListBnd);
-            for i_ent in [1..len]
+            for fBnd in list_low1[eBnd.jOrb].ListBnd
             do
-                EXT:=list_low1[eBnd.jOrb].ListBnd[i_ent].EXT;
-                EXT1:=Set(EXT * eBnd.M);
+                EXT1:=Set(fBnd.EXT * eBnd.M);
+                EXT1_b:=Set(list_cells2[fBnd.jOrb].EXT * fBnd.M * eBnd.M);
+                if EXT1<>EXT1_b then
+                    Error("Inconsistent EXT1 / EXT1_b");
+                fi;
                 AddSet(ListEXT1, EXT1);
+                n_call:=n_call+1;
             od;
         od;
+        Print("i=", i, " n_call=", n_call, " |ListEXT1|=", Length(ListEXT1), " |ListEXT2|=", Length(ListEXT2), "\n");
         ListEXT1_iOrb:=ListWithIdenticalEntries(Length(ListEXT2), -1);
         ListEXT2_iOrb:=[];
         for eBnd in list_low0[i].ListBnd
         do
             Add(ListEXT2_iOrb, eBnd.jOrb);
-            len:=Length(list_low1[eBnd.jOrb].ListBnd);
-            for i_ent in [1..len]
+            for fBnd in list_low1[eBnd.jOrb].ListBnd
             do
-                fBnd:=list_low1[eBnd.jOrb].ListBnd[i_ent];
-                EXT:=fBnd.EXT;
                 EXT1:=Set(fBnd.EXT * eBnd.M);
                 pos:=Position(ListEXT1, EXT1);
                 ListEXT1_iOrb[pos]:=fBnd.jOrb;
@@ -472,3 +474,48 @@ get_lower_graphs:=function(k, d, index)
     return ListGraphInfo;
 end;
 
+get_relative_homology_differentials:=function(k, d, index, irred_choice)
+    local list_low0, list_low1, list_irred_cells0, list_irred_cells1, list_irred_cells2, get_rec_sel, get_differential, differential0, differential1;
+    list_low0:=get_lower_cells(k, d, index-1);
+    list_low1:=get_lower_cells(k, d, index);
+    list_irred_cells0:=get_cells_with_irreducibility(k, d, index - 1);
+    list_irred_cells1:=get_cells_with_irreducibility(k, d, index);
+    list_irred_cells2:=get_cells_with_irreducibility(k, d, index + 1);
+    get_rec_sel:=function(list_irred_cells)
+        local list_sel, n_cell, vect_map, pos, i;
+        list_sel:=Filtered([1..Length(list_irred_cells)], x->list_irred_cells[x].is_irredudible=irred_choice);
+        n_cell:=Length(list_irred_cells);
+        vect_map:=ListWithIdenticalEntries(n_cell, -1);
+        pos:=0;
+        for i in [1..n_cell]
+        do
+            if list_irred_cells[i].is_irreducible=irred_choice then
+                pos:=pos+1;
+                vect_map[i]:=pos;
+            fi;
+        od;
+        return rec(list_sell:=list_sel, vect_map:=vect_map);
+    end;
+    get_differential:=function(list_low, rec_cell_start, rec_cell_end)
+        local the_differential, i_start, i_cell, list_bnd, ent, new_jOrb, e_bnd;
+        the_differential:=[];
+        for i_start in [1..Length(rec_cell_start.list_sel)]
+        do
+            i_cell:=rec_cell_start.list_cell[i_start];
+            list_bnd:=[];
+            for ent in list_low[i_cell].ListBnd
+            do
+                new_jOrb:=rec_cell_end.vect_map[ent.jOrb];
+                if new_jOrb<>-1 then
+                    e_bnd:=rec(jOrb:=new_jOrb, M:=ent.M, sign:=ent.sign);
+                    Add(list_bnd, e_bnd);
+                fi;
+            od;
+            Add(the_differential, list_bnd);
+        od;
+        return the_differential;
+    end;
+    differential0:=get_differential(list_low0, list_irred_cells0, list_irred_cells1);
+    differential1:=get_differential(list_low1, list_irred_cells1, list_irred_cells2);
+    return rec(differential0:=differential0, differential1:=differential1);
+end;

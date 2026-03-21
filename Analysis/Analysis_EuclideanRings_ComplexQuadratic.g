@@ -22,7 +22,7 @@ end;
 
 
 process_example:=function(d)
-    local ListCells2, ListCells3, ListCells4, ListLower3, ListLower4, ListUpper2, ListUpper3, ListUpperGraph2, ListLowerGraph4, RecSave, FileSave;
+    local ListCells2, ListCells3, ListCells4, ListLower3, ListLower4, ListUpper2, ListUpper3, ListUpperGraph2, ListLowerGraph4, RecSave, FileSave, homology_data3_f, homology_data3_t;
     ListCells2:=get_cells_with_irreducibility(3, d, 6);
     ListCells3:=get_cells_with_irreducibility(3, d, 5);
     ListCells4:=get_cells_with_irreducibility(3, d, 4);
@@ -36,11 +36,16 @@ process_example:=function(d)
     ListUpperGraph2:=get_upper_graphs(3, d, 6);
     ListLowerGraph4:=get_lower_graphs(3, d, 4);
 
+    homology_data3_f:=get_relative_homology_differentials(3, d, 5, false);
+    homology_data3_t:=get_relative_homology_differentials(3, d, 5, true);
+
     RecSave:=rec(ListCells2:=ListCells2, ListCells3:=ListCells3, ListCells4:=ListCells4,
                  ListLower3:=ListLower3, ListLower4:=ListLower4,
                  ListUpper2:=ListUpper2, ListUpper3:=ListUpper3,
                  ListUpperGraph2:=ListUpperGraph2,
-                 ListLowerGraph4:=ListLowerGraph4);
+                 ListLowerGraph4:=ListLowerGraph4,
+                 homology_data3_f:=homology_data3_f,
+                 homology_data3_t:=homology_data3_t);
     FileSave:=Concatenation("Enumeration_3_", String(d), ".gap");
     SaveDataToFile(FileSave, RecSave);
 end;
