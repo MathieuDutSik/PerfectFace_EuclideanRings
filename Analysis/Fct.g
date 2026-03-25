@@ -475,7 +475,7 @@ get_lower_graphs:=function(k, d, index)
 end;
 
 get_relative_homology_differentials:=function(k, d, index, irred_choice)
-    local list_low0, list_low1, list_irred_cells0, list_irred_cells1, list_irred_cells2, get_rec_sel, get_differential, differential0, differential1;
+    local list_low0, list_low1, list_irred_cells0, list_irred_cells1, list_irred_cells2, get_rec_sel, get_differential, differential0, differential1, rec_sel0, rec_sel1, rec_sel2;
     list_low0:=get_lower_cells(k, d, index-1);
     list_low1:=get_lower_cells(k, d, index);
     list_irred_cells0:=get_cells_with_irreducibility(k, d, index - 1);
@@ -483,7 +483,7 @@ get_relative_homology_differentials:=function(k, d, index, irred_choice)
     list_irred_cells2:=get_cells_with_irreducibility(k, d, index + 1);
     get_rec_sel:=function(list_irred_cells)
         local list_sel, n_cell, vect_map, pos, i;
-        list_sel:=Filtered([1..Length(list_irred_cells)], x->list_irred_cells[x].is_irredudible=irred_choice);
+        list_sel:=Filtered([1..Length(list_irred_cells)], x->list_irred_cells[x].is_irreducible=irred_choice);
         n_cell:=Length(list_irred_cells);
         vect_map:=ListWithIdenticalEntries(n_cell, -1);
         pos:=0;
@@ -494,14 +494,14 @@ get_relative_homology_differentials:=function(k, d, index, irred_choice)
                 vect_map[i]:=pos;
             fi;
         od;
-        return rec(list_sell:=list_sel, vect_map:=vect_map);
+        return rec(list_sel:=list_sel, vect_map:=vect_map);
     end;
     get_differential:=function(list_low, rec_cell_start, rec_cell_end)
         local the_differential, i_start, i_cell, list_bnd, ent, new_jOrb, e_bnd;
         the_differential:=[];
         for i_start in [1..Length(rec_cell_start.list_sel)]
         do
-            i_cell:=rec_cell_start.list_cell[i_start];
+            i_cell:=rec_cell_start.list_sel[i_start];
             list_bnd:=[];
             for ent in list_low[i_cell].ListBnd
             do
@@ -515,7 +515,10 @@ get_relative_homology_differentials:=function(k, d, index, irred_choice)
         od;
         return the_differential;
     end;
-    differential0:=get_differential(list_low0, list_irred_cells0, list_irred_cells1);
-    differential1:=get_differential(list_low1, list_irred_cells1, list_irred_cells2);
+    rec_sel0:=get_rec_sel(list_irred_cells0);
+    rec_sel1:=get_rec_sel(list_irred_cells1);
+    rec_sel2:=get_rec_sel(list_irred_cells2);
+    differential0:=get_differential(list_low0, rec_sel0, rec_sel1);
+    differential1:=get_differential(list_low1, rec_sel1, rec_sel2);
     return rec(differential0:=differential0, differential1:=differential1);
 end;
