@@ -21,7 +21,8 @@ get_grp:=function()
 end;
 
 
-process_example:=function(d)
+
+get_rec_save_kernel:=function(d)
     local ListCells2, ListCells3, ListCells4, ListLower3, ListLower4, ListUpper2, ListUpper3, ListUpperGraph2, ListLowerGraph4, RecSave, FileSave, homology_data3_f, homology_data3_t;
     Print("Startin of process_example for d=", d, "\n");
     ListCells2:=get_cells_with_irreducibility(3, d, 6);
@@ -37,14 +38,24 @@ process_example:=function(d)
     ListUpperGraph2:=get_upper_graphs(3, d, 6);
     ListLowerGraph4:=get_lower_graphs(3, d, 4);
 
-    RecSave:=rec(ListCells2:=ListCells2, ListCells3:=ListCells3, ListCells4:=ListCells4,
-                 ListLower3:=ListLower3, ListLower4:=ListLower4,
-                 ListUpper2:=ListUpper2, ListUpper3:=ListUpper3,
-                 ListUpperGraph2:=ListUpperGraph2,
-                 ListLowerGraph4:=ListLowerGraph4);
+    return rec(ListCells2:=ListCells2, ListCells3:=ListCells3, ListCells4:=ListCells4,
+               ListLower3:=ListLower3, ListLower4:=ListLower4,
+               ListUpper2:=ListUpper2, ListUpper3:=ListUpper3,
+               ListUpperGraph2:=ListUpperGraph2,
+               ListLowerGraph4:=ListLowerGraph4);
+end;
+
+
+get_rec_save:=function(d)
+    local FileSave, RecSave;
     FileSave:=Concatenation("Enumeration_3_", String(d), ".gap");
-    SaveDataToFile(FileSave, RecSave);
-    return RecSave;
+    if IsExistingFile(FileSave) then
+        return ReadAsFunction(FileSave)();
+    else
+        RecSave:=get_rec_save_kernel(d);
+        SaveDataToFile(FileSave, RecSave);
+        return RecSave;
+    fi;
 end;
 
 get_initial_state:=function(RecSave)
@@ -103,14 +114,38 @@ get_subgraph:=function(g, l_status1, l_status2)
     return InducedSubgraph(g, LVert);
 end;
 
+
+number_edges:=function(g)
+    local n_entry, n_vert, i, LAdj, n_edges;
+    n_entry:=0;
+    n_vert:=OrderGraph(g);
+    for i in [1..n_vert]
+    do
+        LAdj:=Adjacency(g, i);
+        n_entry:=n_entry + Length(LAdj);
+    od;
+    n_edges:=n_entry / 2;
+    return n_edges;
+end;
+
+
+
 IsTree:=function(g)
-    return IsConnectedGraph(g) and
-           Size(Edges(g)) = OrderGraph(g) - 1;
+    local n_vert, n_edge;
+    if IsConnectedGraph(g)=false then
+        return false;
+    fi;
+    n_vert:=OrderGraph(g);
+    n_edge:=number_edges(g);
+    if n_edge<>n_vert-1 then
+        return false;
+    fi;
+    return true;
 end;
 
 
 is_allowed_extension:=function(RecSave, rec_cells, choice)
-    local l_cell2, l_cell3, l_cell4;
+    local l_cell2, l_cell3, l_cell4, RecGRA, l_status1, l_status2, h, l_lower_jOrb3, l_upper_jOrb3, l_y3, l_Xi;
     l_cell2:=rec_cells.l_cell2;
     l_cell3:=rec_cells.l_cell3;
     l_cell4:=rec_cells.l_cell4;
@@ -162,9 +197,51 @@ end;
 
 
 
-
-
-
+get_one_ordering:=function(RecSave, rec_cells, l_miss)
+    local ret_ordering, n_miss, rec_cells_work, l_idx_done, get_one_index, append_index, i, index;
+    ret_ordering:=[];
+    n_miss:=Length(l_miss);
+    rec_cells_work:=StructuralCopy(rec_cells);
+    l_idx_done:=ListWithIdenticalEntries(n_miss, false);
+    get_one_index:=function()
+        local i, choice;
+        for i in [1..n_miss]
+        do
+            if l_idx_done[i]=false then
+                choice:=l_miss[i];
+                if is_allowed_extension(RecSave, rec_cells, choice) then
+                    return i;
+                fi;
+            fi;
+        od;
+        return fail;
+    end;
+    append_index:=function(idx)
+        local dim, u;
+        dim:=l_miss[idx].dim;
+        u:=l_miss[idx].index;
+        if dim=2 then
+            Add(rec_cells_work.l_cell2, u);
+        fi;
+        if dim=3 then
+            Add(rec_cells_work.l_cell3, u);
+        fi;
+        if dim=4 then
+            Add(rec_cells_work.l_cell4, u);
+        fi;
+        Add(ret_ordering, l_miss[idx]);
+        l_idx_done[idx]:=true;
+    end;
+    for i in [1..n_miss]
+    do
+        index:=get_one_index();
+        if index=fail then
+            return fail;
+        fi;
+        append_index(index);
+    od;
+    return ret_ordering;
+end;
 
 
 
@@ -174,7 +251,24 @@ end;
 
 
 search_cell_ordering:=function(d)
-    
+    local RecSave, rec_cells, l_miss, n_miss, GRP, iter, eGen, l_miss_work, result;
+    RecSave:=get_rec_save(d);
+    rec_cells:=get_initial_state(RecSave);
+    l_miss:=get_missing_cells(RecSave);
+    n_miss:=Length(l_miss);
+    GRP:=SymmetricGroup(n_miss);
+    iter:=0;
+    while(true)
+    do
+        iter:=iter+1;
+        Print("Before get_one_ordering, iter=", iter, "\n");
+        eGen:=Random(GRP);
+        l_miss_work:=Permuted(l_miss, eGen);
+        result:=get_one_ordering(RecSave, rec_cells, l_miss_work);
+        if result<>fail then
+            return result;
+        fi;
+    od;
 end;
 
 
@@ -183,9 +277,9 @@ end;
 
 
 
-#process_example(-3);
-#process_example(-4);
-process_example(-7);
-process_example(-8);
-process_example(-11);
+#get_rec_save(-3);
+#get_rec_save(-4);
+get_rec_save(-7);
+get_rec_save(-8);
+get_rec_save(-11);
 
