@@ -59,10 +59,13 @@ get_rec_save:=function(d)
 end;
 
 get_initial_state:=function(RecSave)
-    local l_cell2, l_cell3, l_cell4;
-    l_cell2:=Filtered([1..Length(RecSave.ListCells2)], x->x.is_irreducible=false);
-    l_cell3:=Filtered([1..Length(RecSave.ListCells3)], x->x.is_irreducible=false);
-    l_cell4:=Filtered([1..Length(RecSave.ListCells4)], x->x.is_irreducible=false);
+    local get_l_cell, l_cell2, l_cell3, l_cell4;
+    get_l_cell:=function(ListCells)
+        return Filtered([1..Length(ListCells)], x->ListCells[x].is_irreducible=false);
+    end;
+    l_cell2:=get_l_cell(RecSave.ListCells2);
+    l_cell3:=get_l_cell(RecSave.ListCells3);
+    l_cell4:=get_l_cell(RecSave.ListCells4);
     return rec(l_cell2:=l_cell2, l_cell3:=l_cell3, l_cell4:=l_cell4);
 end;
 
@@ -160,11 +163,11 @@ is_allowed_extension:=function(RecSave, rec_cells, choice)
     fi;
     if choice.dim=3 then
         l_lower_jOrb3:=List(RecSave.ListLower3[choice.index].ListBnd, x->x.jOrb);
-        l_upper_jOrb3:=List(RecSave.ListUpper3[choice.index], x->x.jOrb);
+        l_upper_jOrb3:=List(RecSave.ListUpper3[choice.index].ListMap, x->x.jOrb);
         # Y = Vor \diagdown X_i^{< \sigma}
-        l_y3:=Filtered(l_lower_jOrb3, x->Position(x, l_cell2)=fail);
+        l_y3:=Filtered(l_lower_jOrb3, x->Position(l_cell2, x)=fail);
         # X_i^{> \sigma}
-        l_Xi:=Filtered(l_upper_jOrb3, x->Position(x, l_cell4)<>fail);
+        l_Xi:=Filtered(l_upper_jOrb3, x->Position(l_cell4, x)<>fail);
         if Length(l_y3)=1 then
             return true;
         fi;
@@ -179,14 +182,14 @@ is_allowed_extension:=function(RecSave, rec_cells, choice)
     if choice.dim=4 then
         # Building Y = Vor \diagdown X_i^{< \sigma}
         RecGRA:=RecSave.ListLowerGraph4[choice.index];
-        l_status1:=List(RecGRA.ListEXT1_iOrb, x->Position(x, l_cell2)=fail);
-        l_status2:=List(RecGRA.ListEXT1_iOrb, x->Position(x, l_cell3)=fail);
+        l_status1:=List(RecGRA.ListEXT1_iOrb, x->Position(l_cell2, x)=fail);
+        l_status2:=List(RecGRA.ListEXT1_iOrb, x->Position(l_cell3, x)=fail);
         h:=get_subgraph(RecGRA.Graph, l_status1, l_status2);
         if IsTree(h) then
             # Condition 1: Then Y is contractible
             return true;
         fi;
-        if Order(h)=0 then
+        if OrderGraph(h)=0 then
             # Condition 2: Y is empty
             return true;
         fi;
@@ -274,6 +277,8 @@ end;
 
 
 
+#search_cell_ordering(-3);
+search_cell_ordering(-4);
 
 
 
