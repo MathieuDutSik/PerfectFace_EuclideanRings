@@ -155,8 +155,8 @@ is_allowed_extension:=function(RecSave, rec_cells, choice)
     if choice.dim=2 then
         # Building X_i^{> \sigma}
         RecGRA:=RecSave.ListUpperGraph2[choice.index];
-        l_status1:=List(RecGRA.ListEXT1_iOrb, x->Position(x, l_cell3)<>fail);
-        l_status2:=List(RecGRA.ListEXT2_iOrb, x->Position(x, l_cell4)<>fail);
+        l_status1:=List(RecGRA.ListEXT1_iOrb, x->Position(l_cell3, x)<>fail);
+        l_status2:=List(RecGRA.ListEXT2_iOrb, x->Position(l_cell4, x)<>fail);
         h:=get_subgraph(RecGRA.Graph, l_status1, l_status2);
         # 0-connectedness is equivalent to classic graph connectedness
         return IsConnectedGraph(h);
@@ -183,7 +183,7 @@ is_allowed_extension:=function(RecSave, rec_cells, choice)
         # Building Y = Vor \diagdown X_i^{< \sigma}
         RecGRA:=RecSave.ListLowerGraph4[choice.index];
         l_status1:=List(RecGRA.ListEXT1_iOrb, x->Position(l_cell2, x)=fail);
-        l_status2:=List(RecGRA.ListEXT1_iOrb, x->Position(l_cell3, x)=fail);
+        l_status2:=List(RecGRA.ListEXT2_iOrb, x->Position(l_cell3, x)=fail);
         h:=get_subgraph(RecGRA.Graph, l_status1, l_status2);
         if IsTree(h) then
             # Condition 1: Then Y is contractible
