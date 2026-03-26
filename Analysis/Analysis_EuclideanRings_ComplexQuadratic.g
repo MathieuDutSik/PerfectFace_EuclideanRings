@@ -70,26 +70,20 @@ get_initial_state:=function(RecSave)
 end;
 
 get_missing_cells:=function(RecSave)
-    local l_choice, i;
+    local l_choice, append_choices, i;
     l_choice:=[];
-    for i in [1..Length(RecSave.ListCells2)]
-    do
-        if RecSave.ListCells2[i].is_irreducible=true then
-            Add(l_choice, rec(dim:=2, index:=i));
-        fi;
-    od;
-    for i in [1..Length(RecSave.ListCells3)]
-    do
-        if RecSave.ListCells3[i].is_irreducible=true then
-            Add(l_choice, rec(dim:=3, index:=i));
-        fi;
-    od;
-    for i in [1..Length(RecSave.ListCells4)]
-    do
-        if RecSave.ListCells4[i].is_irreducible=true then
-            Add(l_choice, rec(dim:=4, index:=i));
-        fi;
-    od;
+    append_choices:=function(ListCells, dim)
+        local i;
+        for i in [1..Length(ListCells)]
+        do
+            if ListCells[i].is_irreducible=true then
+                Add(l_choice, rec(dim:=dim, index:=i));
+            fi;
+        od;
+    end;
+    append_choices(RecSave.ListCells2, 2);
+    append_choices(RecSave.ListCells3, 3);
+    append_choices(RecSave.ListCells4, 4);
     return l_choice;
 end;
 
@@ -199,6 +193,25 @@ is_allowed_extension:=function(RecSave, rec_cells, choice)
 end;
 
 
+append_choice:=function(rec_cells, choice)
+    local dim, u, rec_cells_work;
+    dim:=choice.dim;
+    u:=choice.index;
+    rec_cells_work:=StructuralCopy(rec_cells);
+    if dim=2 then
+        Add(rec_cells_work.l_cell2, u);
+    fi;
+    if dim=3 then
+        Add(rec_cells_work.l_cell3, u);
+    fi;
+    if dim=4 then
+        Add(rec_cells_work.l_cell4, u);
+    fi;
+    return rec_cells_work;
+end;
+
+
+
 
 get_one_ordering:=function(RecSave, rec_cells, l_miss)
     local ret_ordering, n_miss, rec_cells_work, l_idx_done, get_one_index, append_index, i, index;
@@ -212,7 +225,7 @@ get_one_ordering:=function(RecSave, rec_cells, l_miss)
         do
             if l_idx_done[i]=false then
                 choice:=l_miss[i];
-                if is_allowed_extension(RecSave, rec_cells, choice) then
+                if is_allowed_extension(RecSave, rec_cells_work, choice) then
                     return i;
                 fi;
             fi;
@@ -220,18 +233,7 @@ get_one_ordering:=function(RecSave, rec_cells, l_miss)
         return fail;
     end;
     append_index:=function(idx)
-        local dim, u;
-        dim:=l_miss[idx].dim;
-        u:=l_miss[idx].index;
-        if dim=2 then
-            Add(rec_cells_work.l_cell2, u);
-        fi;
-        if dim=3 then
-            Add(rec_cells_work.l_cell3, u);
-        fi;
-        if dim=4 then
-            Add(rec_cells_work.l_cell4, u);
-        fi;
+        rec_cells_work:=append_choice(rec_cells_work, l_miss[idx]);
         Add(ret_ordering, l_miss[idx]);
         l_idx_done[idx]:=true;
     end;
@@ -239,6 +241,7 @@ get_one_ordering:=function(RecSave, rec_cells, l_miss)
     do
         index:=get_one_index();
         if index=fail then
+            Print("get_one_ordering, failing with |ret_ordering|=", Length(ret_ordering), " n_miss=", n_miss, "\n");
             return fail;
         fi;
         append_index(index);
@@ -254,19 +257,23 @@ end;
 
 
 search_cell_ordering:=function(d)
-    local RecSave, rec_cells, l_miss, n_miss, GRP, iter, eGen, l_miss_work, result;
+    local RecSave, rec_cells, l_miss, n_miss, GRP, iter, eGen, eElt, l_miss_work, result;
     RecSave:=get_rec_save(d);
     rec_cells:=get_initial_state(RecSave);
     l_miss:=get_missing_cells(RecSave);
     n_miss:=Length(l_miss);
+    Print("search_cell_ordering, n_miss=", n_miss, "\n");
     GRP:=SymmetricGroup(n_miss);
     iter:=0;
+    eElt:=();
     while(true)
     do
         iter:=iter+1;
         Print("Before get_one_ordering, iter=", iter, "\n");
         eGen:=Random(GRP);
-        l_miss_work:=Permuted(l_miss, eGen);
+        eElt:=eElt * eGen;
+        l_miss_work:=Permuted(l_miss, eElt);
+#        Print("l_miss_work=", l_miss_work, "\n");
         result:=get_one_ordering(RecSave, rec_cells, l_miss_work);
         if result<>fail then
             return result;
@@ -275,10 +282,47 @@ search_cell_ordering:=function(d)
 end;
 
 
+# Check that the example from Section 3 passes.
+test_gaussian:=function()
+    local RecSave, rec_cells_work, choice, The_sequence, l_miss, result;
+    RecSave:=get_rec_save(-4);
+    rec_cells_work:=get_initial_state(RecSave);
+    #
+    The_sequence:=[rec(dim:=3, index:=1),
+                   rec(dim:=4, index:=3),
+                   rec(dim:=3, index:=2),
+                   rec(dim:=4, index:=1),
+                   rec(dim:=2, index:=2),
+                   rec(dim:=4, index:=2)];
+    for choice in The_sequence
+    do
+        l_miss:=[choice];
+        result:=get_one_ordering(RecSave, rec_cells_work, l_miss);
+        if result=fail then
+            Print("The attempt at inserting choice=", choice, " failed\n");
+            Error("Please correct");
+        fi;
+        rec_cells_work:=append_choice(rec_cells_work, choice);
+        Print("rec_cells_work=", rec_cells_work, "\n");
+    od;
+    #
+    Print("-----------------------------------\n");
+    rec_cells_work:=get_initial_state(RecSave);
+    result:=get_one_ordering(RecSave, rec_cells_work, The_sequence);
+    Print("result=", result, "\n");
+end;
+
+
+
+#test_gaussian();
+
+
+
 
 
 #search_cell_ordering(-3);
-search_cell_ordering(-4);
+#search_cell_ordering(-4);
+search_cell_ordering(-8);
 
 
 
